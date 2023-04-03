@@ -47,6 +47,11 @@ namespace QuestProModule
 
             _config.OnThisConfigurationChanged += OnConfigurationChanged;
 
+            EyeOpenExponent = _config.GetValue(EyeOpennessExponent);
+            EyeWideMult = _config.GetValue(EyeWideMultiplier);
+            EyeMoveMult = _config.GetValue(EyeMovementMultiplier);
+            EyeExpressionMult = _config.GetValue(EyeExpressionMultiplier);
+
             new Harmony("net.dfgHiatus.QuestPro4Neos").PatchAll();
 		}
 
