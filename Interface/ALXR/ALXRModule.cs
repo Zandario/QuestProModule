@@ -91,6 +91,9 @@ namespace QuestProModule.ALXR
                     connected = true;
 
                     return true;
+                } else
+                {
+                    return false;
                 }
             }
             catch (Exception e)
