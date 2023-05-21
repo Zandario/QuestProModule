@@ -1,6 +1,7 @@
 ﻿using BaseX;
 using FrooxEngine;
 using FrooxEngine.LogiX;
+using FrooxEngine.LogiX.Math.Binary;
 using System;
 using System.Diagnostics;
 using System.Net;
@@ -76,29 +77,22 @@ namespace QuestProModule.ALXR
 
         private bool ConnectToTCP()
         {
-            try
+            client = new TcpClient();
+            UniLog.Log($"Trying to establish a Quest Pro connection at {localAddr}:{DEFAULT_PORT}...");
+
+            client.Connect(localAddr, DEFAULT_PORT);
+
+            if (client.Connected)
             {
-                client = new TcpClient();
-                UniLog.Log($"Trying to establish a Quest Pro connection at {localAddr}:{DEFAULT_PORT}...");
+                UniLog.Log("Connected to Quest Pro!");
 
-                client.Connect(localAddr, DEFAULT_PORT);
+                stream = client.GetStream();
+                connected = true;
 
-                if (client.Connected)
-                {
-                    UniLog.Log("Connected to Quest Pro!");
-
-                    stream = client.GetStream();
-                    connected = true;
-
-                    return true;
-                } else
-                {
-                    return false;
-                }
-            }
-            catch (Exception e)
+                return true;
+            } else
             {
-                UniLog.Error(e.Message);
+                connected = false;
                 return false;
             }
         }
@@ -107,18 +101,22 @@ namespace QuestProModule.ALXR
         {
             while (!cancellationTokenSource.IsCancellationRequested)
             {
+
                 try
                 {
-                    // Attempt reconnection if needed
                     if (!connected)
                     {
+                        UniLog.Log("Not connected.  Attempting connection.");
                         if (!IsALXRRunning)
                         {
                             StartALXR();
-                            Thread.Sleep(1000);
+                            Thread.Sleep(2000);
                         }
 
                         ConnectToTCP();
+
+                        if (!connected)
+                            Thread.Sleep(1000);
                     }
 
 
@@ -168,12 +166,26 @@ namespace QuestProModule.ALXR
                         // Preprocess our expressions per Meta's Documentation
                         PrepareUpdate();
                     }
-                }
-                catch (SocketException e)
+                } catch (Exception ex)
                 {
-                    UniLog.Error(e.Message);
+                    // Do some cleanup prior to reconnecting.
+                    connected = false;
+
+                    if (stream != null)
+                    {
+                        stream.Close();
+                        stream.Dispose();
+                    }
+
+                    if (client != null)
+                    {
+                        client.Close();
+                        client.Dispose();
+                    }
+
                     Thread.Sleep(1000);
                 }
+                
             }         
         }
     
