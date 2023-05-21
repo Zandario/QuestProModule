@@ -241,34 +241,6 @@ namespace QuestProModule.ALXR
                 expressions[FBExpression.Eyes_Closed_R] = 0.9f - ((expressions[FBExpression.Eyes_Closed_R] * 3) / (1 + expressions[FBExpression.Eyes_Look_Down_R] * 3));
             }
 
-            if (1 - expressions[FBExpression.Eyes_Closed_L] < expressions[FBExpression.Lid_Tightener_L])
-                expressions[FBExpression.Lid_Tightener_L] = (1 - expressions[FBExpression.Eyes_Closed_L]) - 0.01f;
-
-            if (1 - expressions[FBExpression.Eyes_Closed_R] < expressions[FBExpression.Lid_Tightener_R])
-                expressions[FBExpression.Lid_Tightener_R] = (1 - expressions[FBExpression.Eyes_Closed_R]) - 0.01f;
-
-
-            expressions[FBExpression.Lid_Tightener_L] = Math.Max(0, expressions[FBExpression.Lid_Tightener_L] - 0.5f);
-            expressions[FBExpression.Lid_Tightener_R] = Math.Max(0, expressions[FBExpression.Lid_Tightener_R] - 0.5f);
-
-            expressions[FBExpression.Inner_Brow_Raiser_L] = Math.Min(1, expressions[FBExpression.Inner_Brow_Raiser_L] * 3f); // * 4;
-            expressions[FBExpression.Brow_Lowerer_L] = Math.Min(1, expressions[FBExpression.Brow_Lowerer_L] * 3f); // * 4;
-            expressions[FBExpression.Outer_Brow_Raiser_L] = Math.Min(1, expressions[FBExpression.Outer_Brow_Raiser_L] * 3f); // * 4;
-
-            expressions[FBExpression.Inner_Brow_Raiser_R] = Math.Min(1, expressions[FBExpression.Inner_Brow_Raiser_R] * 3f); // * 4;
-            expressions[FBExpression.Brow_Lowerer_R] = Math.Min(1, expressions[FBExpression.Brow_Lowerer_R] * 3f); // * 4;
-            expressions[FBExpression.Outer_Brow_Raiser_R] = Math.Min(1, expressions[FBExpression.Outer_Brow_Raiser_R] * 3f); // * 4;
-
-            expressions[FBExpression.Eyes_Look_Up_L] = expressions[FBExpression.Eyes_Look_Up_L] * 0.55f;
-            expressions[FBExpression.Eyes_Look_Up_R] = expressions[FBExpression.Eyes_Look_Up_R] * 0.55f;
-            expressions[FBExpression.Eyes_Look_Down_L] = expressions[FBExpression.Eyes_Look_Down_L] * 1.5f;
-            expressions[FBExpression.Eyes_Look_Down_R] = expressions[FBExpression.Eyes_Look_Down_R] * 1.5f;
-
-            expressions[FBExpression.Eyes_Look_Left_L] = expressions[FBExpression.Eyes_Look_Left_L] * 0.85f;
-            expressions[FBExpression.Eyes_Look_Right_L] = expressions[FBExpression.Eyes_Look_Right_L] * 0.85f;
-            expressions[FBExpression.Eyes_Look_Left_R] = expressions[FBExpression.Eyes_Look_Left_R] * 0.85f;
-            expressions[FBExpression.Eyes_Look_Right_R] = expressions[FBExpression.Eyes_Look_Right_R] * 0.85f;
-
             // Hack: turn rots to looks
             // Yitch = 29(left)-- > -29(right)
             // Yaw = -27(down)-- > 27(up)
@@ -558,18 +530,18 @@ namespace QuestProModule.ALXR
             _mouth.IsDeviceActive = Engine.Current.InputInterface.VR_Active;
             _mouth.IsTracking = Engine.Current.InputInterface.VR_Active;
 
-            _mouth.JawOpen = expressions[FBExpression.Jaw_Drop];
+            _mouth.JawOpen = expressions[FBExpression.Jaw_Drop] - expressions[FBExpression.Lips_Toward];
 
             var jawHorizontal = expressions[FBExpression.Jaw_Sideways_Right] - expressions[FBExpression.Jaw_Sideways_Left];
             var jawForward = expressions[FBExpression.Jaw_Thrust];
-            var jawDown = expressions[FBExpression.Lips_Toward] + expressions[FBExpression.Jaw_Drop];
+            var jawDown = expressions[FBExpression.Jaw_Drop];
 
             _mouth.Jaw = new float3(
                 jawHorizontal,
-                jawForward,
-                jawDown
+                jawDown,
+                jawForward
             );
-
+            
             _mouth.LipUpperLeftRaise = expressions[FBExpression.Upper_Lip_Raiser_L];
             _mouth.LipUpperRightRaise = expressions[FBExpression.Upper_Lip_Raiser_R];
             _mouth.LipLowerLeftRaise = expressions[FBExpression.Lower_Lip_Depressor_L];
@@ -594,6 +566,7 @@ namespace QuestProModule.ALXR
 
             _mouth.CheekLeftPuffSuck -= expressions[FBExpression.Cheek_Suck_L];
             _mouth.CheekRightPuffSuck -= expressions[FBExpression.Cheek_Suck_R];
+            
         }
 
         #endregion
