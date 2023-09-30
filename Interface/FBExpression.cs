@@ -66,7 +66,7 @@
         public const int Upper_Lip_Raiser_L = 61;
         public const int Upper_Lip_Raiser_R = 62;
         public const int Max = 63;
-        
+
         // Above are the natural expressions tracked by the Quest Pro
         // Below is the eye tracking information
         public const int LeftRot_x = 64;

@@ -20,7 +20,7 @@ namespace QuestProModule
 
         private void Teardown()
         {
-            
+
         }
 
         public void CollectDeviceInfos(DataTreeList list)
@@ -69,7 +69,8 @@ namespace QuestProModule
                 {
                     _eyes.CombinedEye.RawPosition = _eyes.LeftEye.RawPosition;
                     _eyes.CombinedEye.UpdateWithRotation(_eyes.LeftEye.RawRotation);
-                } else
+                }
+                else
                 {
                     _eyes.CombinedEye.RawPosition = _eyes.RightEye.RawPosition;
                     _eyes.CombinedEye.UpdateWithRotation(_eyes.RightEye.RawRotation);

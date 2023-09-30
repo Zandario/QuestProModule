@@ -1,13 +1,10 @@
-﻿using BaseX;
+﻿using Elements.Core;
 using FrooxEngine;
-using FrooxEngine.LogiX;
-using FrooxEngine.LogiX.Math.Binary;
 using System;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace QuestProModule.ALXR
 {
@@ -24,12 +21,12 @@ namespace QuestProModule.ALXR
 
         private const int NATURAL_EXPRESSIONS_COUNT = 63;
         private const float SRANIPAL_NORMALIZER = 0.75f;
-        private byte[] rawExpressions = new byte[NATURAL_EXPRESSIONS_COUNT * 4 + (8 * 2 * 4)];
-        private float[] expressions = new float[NATURAL_EXPRESSIONS_COUNT + (8 * 2)];
+        private readonly byte[] rawExpressions = new byte[NATURAL_EXPRESSIONS_COUNT * 4 + (8 * 2 * 4)];
+        private readonly float[] expressions = new float[NATURAL_EXPRESSIONS_COUNT + (8 * 2)];
 
         private double pitch_L, yaw_L, pitch_R, yaw_R; // Eye rotations
 
-        #region NEOS VARIABLES
+        #region RESONITE VARIABLES
         private InputInterface _input;
         public int UpdateOrder => 100;
         private Mouth _mouth;
@@ -44,7 +41,7 @@ namespace QuestProModule.ALXR
             get
             {
                 Process[] pname = Process.GetProcessesByName("alxr-client");
-                UniLog.Log($"ALXR processes: {pname.Length.ToString()}");
+                UniLog.Log($"ALXR processes: {pname.Length}");
                 return pname.Length > 0;
             }
         }
@@ -53,10 +50,10 @@ namespace QuestProModule.ALXR
         {
             // Attempt to start ALXR.
             _alxrProcess = new Process();
-            string neosPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-            neosPath = System.IO.Path.GetDirectoryName(neosPath);
+            string resonitePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+            resonitePath = System.IO.Path.GetDirectoryName(resonitePath);
 
-            _alxrProcess.StartInfo.FileName = neosPath + "/alxr_client_windows/alxr-client.exe";
+            _alxrProcess.StartInfo.FileName = resonitePath + "/alxr_client_windows/alxr-client.exe";
             _alxrProcess.StartInfo.Arguments = "--no-alvr-server --no-bindings";
 
             UniLog.Log($"Starting ALXR at: {_alxrProcess.StartInfo.FileName}");
@@ -70,7 +67,7 @@ namespace QuestProModule.ALXR
             localAddr = IPAddress.Parse(ipconfig);
 
             cancellationTokenSource = new CancellationTokenSource();
-            
+
             tcpThread = new Thread(Update);
             tcpThread.Start();
         }
@@ -90,7 +87,8 @@ namespace QuestProModule.ALXR
                 connected = true;
 
                 return true;
-            } else
+            }
+            else
             {
                 connected = false;
                 return false;
@@ -101,7 +99,6 @@ namespace QuestProModule.ALXR
         {
             while (!cancellationTokenSource.IsCancellationRequested)
             {
-
                 try
                 {
                     if (!connected)
@@ -166,7 +163,8 @@ namespace QuestProModule.ALXR
                         // Preprocess our expressions per Meta's Documentation
                         PrepareUpdate();
                     }
-                } catch (Exception ex)
+                }
+                catch (Exception)
                 {
                     // Do some cleanup prior to reconnecting.
                     connected = false;
@@ -185,10 +183,10 @@ namespace QuestProModule.ALXR
 
                     Thread.Sleep(1000);
                 }
-                
-            }         
+
+            }
         }
-    
+
         private void PrepareUpdate()
         {
             // Eye Expressions
@@ -201,10 +199,10 @@ namespace QuestProModule.ALXR
             double yaw = Math.Atan2(2.0 * (q_y * q_z + q_w * q_x), q_w * q_w - q_x * q_x - q_y * q_y + q_z * q_z);
             double pitch = Math.Asin(-2.0 * (q_x * q_z - q_w * q_y));
             // Not needed for eye tracking
-            // double roll = Math.Atan2(2.0 * (q_x * q_y + q_w * q_z), q_w * q_w + q_x * q_x - q_y * q_y - q_z * q_z); 
+            // double roll = Math.Atan2(2.0 * (q_x * q_y + q_w * q_z), q_w * q_w + q_x * q_x - q_y * q_y - q_z * q_z);
 
             // From radians
-            pitch_L = 180.0 / Math.PI * pitch; 
+            pitch_L = 180.0 / Math.PI * pitch;
             yaw_L = 180.0 / Math.PI * yaw;
 
             q_x = expressions[FBExpression.RightRot_x];
@@ -216,14 +214,14 @@ namespace QuestProModule.ALXR
             pitch = Math.Asin(-2.0 * (q_x * q_z - q_w * q_y));
 
             // From radians
-            pitch_R = 180.0 / Math.PI * pitch; 
+            pitch_R = 180.0 / Math.PI * pitch;
             yaw_R = 180.0 / Math.PI * yaw;
 
             // Face Expressions
 
             // Eyelid edge case, eyes are actually closed now
             if (expressions[FBExpression.Eyes_Look_Down_L] == expressions[FBExpression.Eyes_Look_Up_L] && expressions[FBExpression.Eyes_Closed_L] > 0.25f)
-            { 
+            {
                 expressions[FBExpression.Eyes_Closed_L] = 0; // 0.9f - (expressions[FBExpression.Lid_Tightener_L] * 3);
             }
             else
@@ -233,7 +231,7 @@ namespace QuestProModule.ALXR
 
             // Another eyelid edge case
             if (expressions[FBExpression.Eyes_Look_Down_R] == expressions[FBExpression.Eyes_Look_Up_R] && expressions[FBExpression.Eyes_Closed_R] > 0.25f)
-            { 
+            {
                 expressions[FBExpression.Eyes_Closed_R] = 0; // 0.9f - (expressions[FBExpression.Lid_Tightener_R] * 3);
             }
             else
@@ -267,7 +265,7 @@ namespace QuestProModule.ALXR
                 expressions[FBExpression.Eyes_Look_Down_L] = Math.Min(1, (float)((-yaw_L) / 27.0)) * SRANIPAL_NORMALIZER;
             }
 
-            
+
             if (pitch_R > 0)
             {
                 expressions[FBExpression.Eyes_Look_Left_R] = Math.Min(1, (float)(pitch_R / 29.0)) * SRANIPAL_NORMALIZER;
@@ -278,7 +276,7 @@ namespace QuestProModule.ALXR
                 expressions[FBExpression.Eyes_Look_Left_R] = 0;
                 expressions[FBExpression.Eyes_Look_Right_R] = Math.Min(1, (float)((-pitch_R) / 29.0)) * SRANIPAL_NORMALIZER;
             }
-            
+
             if (yaw_R > 0)
             {
                 expressions[FBExpression.Eyes_Look_Up_R] = Math.Min(1, (float)(yaw_R / 27.0)) * SRANIPAL_NORMALIZER;
@@ -393,7 +391,7 @@ namespace QuestProModule.ALXR
                     frooxEye.Frown = (expressions[FBExpression.Lip_Corner_Puller_R] - expressions[FBExpression.Lip_Corner_Depressor_R]) + (expressions[FBExpression.Lip_Corner_Puller_L] - expressions[FBExpression.Lip_Corner_Depressor_L]) / 2.0f;
                     break;
             }
-            
+
             frooxEye.IsTracking = IsValid(frooxEye.RawPosition);
             frooxEye.IsTracking = IsValid(frooxEye.Direction);
             frooxEye.IsTracking = IsValid(frooxEye.Openness);
@@ -401,7 +399,7 @@ namespace QuestProModule.ALXR
 
         #region IINPUTDRIVER METHODS
         /// <summary>
-        /// Registers the eye and lip tracking devices with Neos.
+        /// Registers the eye and lip tracking devices with Resonite.
         /// </summary>
         /// <param name="list"></param>
         public void CollectDeviceInfos(DataTreeList list)
@@ -541,7 +539,7 @@ namespace QuestProModule.ALXR
                 jawDown,
                 jawForward
             );
-            
+
             _mouth.LipUpperLeftRaise = expressions[FBExpression.Upper_Lip_Raiser_L];
             _mouth.LipUpperRightRaise = expressions[FBExpression.Upper_Lip_Raiser_R];
             _mouth.LipLowerLeftRaise = expressions[FBExpression.Lower_Lip_Depressor_L];
@@ -566,7 +564,7 @@ namespace QuestProModule.ALXR
 
             _mouth.CheekLeftPuffSuck -= expressions[FBExpression.Cheek_Suck_L];
             _mouth.CheekRightPuffSuck -= expressions[FBExpression.Cheek_Suck_R];
-            
+
         }
 
         #endregion
